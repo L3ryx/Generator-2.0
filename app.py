@@ -2,10 +2,9 @@ import gradio as gr
 import os
 import random
 import requests
-import re
 
 # =====================================================
-# HUGGING FACE CONFIG
+# 🔐 HUGGING FACE CONFIG
 # =====================================================
 
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -17,7 +16,7 @@ headers = {
 }
 
 # =====================================================
-# LISTES
+# 📦 LISTES
 # =====================================================
 
 TOP_LIST = ["Oversized T-shirt", "Hoodie", "Shirt", "Crop Top", "Blouse"]
@@ -48,68 +47,55 @@ SHOT_LIST = [
 ]
 
 # =====================================================
-# UTILITIES
+# 🔄 AUTO FUNCTIONS
 # =====================================================
 
-def auto_choice(list_items):
-    return random.choice(list_items)
+def auto_choice(items):
+    return random.choice(items)
 
 # =====================================================
-# GENERATION VIA HUGGINGFACE
+# 🤖 HUGGING FACE GENERATOR (SAFE VERSION)
 # =====================================================
 
 def generate_with_hf(prompt):
 
     if not HF_TOKEN:
-        return "❌ HF_TOKEN NOT CONFIGURED"
+        return "❌ HF_TOKEN NOT CONFIGURED IN ENV VARIABLES"
 
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_length": 450,
+            "max_new_tokens": 300,
             "temperature": 0.8,
             "top_p": 0.9,
             "do_sample": True
         }
     }
 
-    response = requests.post(API_URL, headers=headers, json=payload)
+    try:
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
 
-    result = response.json()
+        if response.status_code != 200:
+            return f"🔥 HF API ERROR:\n{response.text}"
 
-    if isinstance(result, list):
-        return result[0].get("generated_text", "")
+        result = response.json()
 
-    return str(result)
+        if isinstance(result, list):
+            return result[0].get("generated_text", "No text generated")
 
-# =====================================================
-# 🔥 POST PROCESSING ENGINE (PRO FEATURE)
-# =====================================================
+        return str(result)
 
-def clean_and_optimize(text):
+    except Exception as e:
+        return f"🔥 REQUEST ERROR:\n{str(e)}"
 
-    # Supprime répétitions inutiles
-    text = re.sub(r"\n+", "\n", text)
-
-    # Supprime phrases inutiles souvent générées par distilgpt2
-    remove_phrases = [
-        "You are",
-        "As an AI",
-        "I cannot",
-        "Sure,",
-        "Here is"
-    ]
-
-    for phrase in remove_phrases:
-        text = text.replace(phrase, "")
-
-    # Force format image prompt clair
-    text += "\n\n-- Optimized for Image Generation --"
-
-    return text.strip()
 
 # =====================================================
-# MAIN GENERATOR (PRO LEVEL)
+# 🚀 MAIN OPTIMIZED GENERATOR
 # =====================================================
 
 def generate_prompt(
@@ -126,10 +112,11 @@ def generate_prompt(
     shot
 ):
 
-    # 🔥 Logique intelligente
+    # 🔥 Intelligent rule
     if gender == "Man":
         beach_mode = False
 
+    # Auto selections
     if auto_top_toggle:
         top = auto_choice(TOP_LIST)
 
@@ -142,66 +129,66 @@ def generate_prompt(
     if auto_color_toggle:
         colors = auto_choice(COLOR_LIST)
 
-    # ===============================
-    # SYSTEM RULES STRICT FOR MODEL
-    # ===============================
+    # =====================================================
+    # 🧠 SYSTEM RULES FOR MODEL
+    # =====================================================
 
     system_prompt = """
-Generate a professional image generation prompt.
+You are an advanced fashion prompt engine.
+
+Your task:
+Generate ONLY optimized image generation prompts.
 
 Rules:
-- Always centered
+- Always centered composition
 - High realism
 - Cinematic lighting
-- 800x1000px
 - DSLR camera
 - 50mm lens
 - Shallow depth of field
 - Background blur
 - Model wearing sunglasses from attached image
-- Sunglasses must be main visual focus
-- Sunglasses must NOT be described as outfit
-- Output in clean structured format
-- English only
+- Sunglasses must be the main visual focus
+- Sunglasses must NOT be described as outfit accessory
+- 800x1000px
+- Output in English
+- No explanation
 """
 
     user_prompt = f"""
-Create optimized prompt.
+Generate professional image prompt.
 
 Gender: {gender}
-Beach: {beach_mode}
+Beach Mode: {beach_mode}
 Top: {top}
 Bottom: {bottom}
 Environment: {env}
 Colors: {colors}
-Shot: {shot}
+Camera Shot: {shot}
 
-Apply professional optimization.
+Apply all rules.
+Optimize for image generation.
 """
 
     final_prompt = system_prompt + "\n" + user_prompt
 
-    # 🔥 Génération brute
-    raw_output = generate_with_hf(final_prompt)
+    result = generate_with_hf(final_prompt)
 
-    # 🔥 Post Processing Intelligent
-    optimized_output = clean_and_optimize(raw_output)
-
-    return optimized_output
+    return result
 
 
 # =====================================================
-# TEST TOKEN
+# 🔎 TEST TOKEN
 # =====================================================
 
 def test_hf():
     if not HF_TOKEN:
         return "❌ HF TOKEN NOT FOUND"
-    return "✅ HF TOKEN OK"
+    return "✅ HF TOKEN DETECTED"
 
 
 # =====================================================
-# INTERFACE UI
+# 🎨 INTERFACE
 # =====================================================
 
 with gr.Blocks(
@@ -230,7 +217,7 @@ with gr.Blocks(
     """
 ) as app:
 
-    gr.Markdown("# 🚀 Nano Banana — AI Pro Prompt Engine")
+    gr.Markdown("# 🚀 Nano Banana — Production Version")
 
     gender = gr.Radio(["Man", "Woman"], label="Gender")
     beach_mode = gr.Checkbox(label="Beach Mode")
@@ -247,7 +234,7 @@ with gr.Blocks(
 
     shot = gr.Dropdown(SHOT_LIST, label="Camera Shot")
 
-    generate_btn = gr.Button("🚀 Generate Ultra Optimized Prompt")
+    generate_btn = gr.Button("🚀 Generate Optimized Prompt")
     output = gr.Textbox(label="Final Prompt", lines=15)
 
     test_btn = gr.Button("🧪 Test HF Token")
@@ -275,11 +262,14 @@ with gr.Blocks(
 
 
 # =====================================================
-# RUN
+# 🚀 RUN SERVER (RENDER COMPATIBLE)
 # =====================================================
 
 if __name__ == "__main__":
+
+    port = int(os.environ.get("PORT", 7860))
+
     app.launch(
         server_name="0.0.0.0",
-        server_port=7860
+        server_port=port
     )
