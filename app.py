@@ -2,6 +2,7 @@ import gradio as gr
 import os
 import random
 import requests
+import re
 
 # =====================================================
 # HUGGING FACE CONFIG
@@ -47,14 +48,14 @@ SHOT_LIST = [
 ]
 
 # =====================================================
-# AUTO FUNCTIONS
+# UTILITIES
 # =====================================================
 
 def auto_choice(list_items):
     return random.choice(list_items)
 
 # =====================================================
-# 🔥 OPTIMIZED PROMPT ENGINE FOR NANO BANANA
+# GENERATION VIA HUGGINGFACE
 # =====================================================
 
 def generate_with_hf(prompt):
@@ -77,13 +78,38 @@ def generate_with_hf(prompt):
     result = response.json()
 
     if isinstance(result, list):
-        return result[0].get("generated_text", "No text generated")
+        return result[0].get("generated_text", "")
 
     return str(result)
 
+# =====================================================
+# 🔥 POST PROCESSING ENGINE (PRO FEATURE)
+# =====================================================
+
+def clean_and_optimize(text):
+
+    # Supprime répétitions inutiles
+    text = re.sub(r"\n+", "\n", text)
+
+    # Supprime phrases inutiles souvent générées par distilgpt2
+    remove_phrases = [
+        "You are",
+        "As an AI",
+        "I cannot",
+        "Sure,",
+        "Here is"
+    ]
+
+    for phrase in remove_phrases:
+        text = text.replace(phrase, "")
+
+    # Force format image prompt clair
+    text += "\n\n-- Optimized for Image Generation --"
+
+    return text.strip()
 
 # =====================================================
-# 🚀 MAIN GENERATOR (OPTIMIZED FOR IMAGE GENERATION)
+# MAIN GENERATOR (PRO LEVEL)
 # =====================================================
 
 def generate_prompt(
@@ -100,7 +126,7 @@ def generate_prompt(
     shot
 ):
 
-    # 🔥 Intelligent logic
+    # 🔥 Logique intelligente
     if gender == "Man":
         beach_mode = False
 
@@ -116,57 +142,52 @@ def generate_prompt(
     if auto_color_toggle:
         colors = auto_choice(COLOR_LIST)
 
-    # =====================================================
-    # 🧠 SYSTEM PROMPT — FORCE STABLE FORMAT
-    # =====================================================
+    # ===============================
+    # SYSTEM RULES STRICT FOR MODEL
+    # ===============================
 
-    system_rules = """
-You are a professional fashion AI prompt generator.
-
-Your task:
-Generate ONLY optimized image generation prompts.
+    system_prompt = """
+Generate a professional image generation prompt.
 
 Rules:
-- Always centered composition
+- Always centered
 - High realism
 - Cinematic lighting
 - 800x1000px
 - DSLR camera
 - 50mm lens
 - Shallow depth of field
-- Background slightly blurred
-- Model always wearing sunglasses from attached image
-- Sunglasses must be main visual focal point
-- Sunglasses must NOT be described as outfit accessory
-- Output strictly in English
-- Output must be a clean structured prompt
-- Do not explain
+- Background blur
+- Model wearing sunglasses from attached image
+- Sunglasses must be main visual focus
+- Sunglasses must NOT be described as outfit
+- Output in clean structured format
+- English only
 """
 
-    # =====================================================
-    # USER STRUCTURED INPUT
-    # =====================================================
-
     user_prompt = f"""
-Create optimized image prompt.
+Create optimized prompt.
 
 Gender: {gender}
-Beach Mode: {beach_mode}
+Beach: {beach_mode}
 Top: {top}
 Bottom: {bottom}
 Environment: {env}
 Colors: {colors}
-Camera Shot: {shot}
+Shot: {shot}
 
-Follow all professional rules.
-Optimize for image generation.
+Apply professional optimization.
 """
 
-    final_prompt = system_rules + "\n" + user_prompt
+    final_prompt = system_prompt + "\n" + user_prompt
 
-    result = generate_with_hf(final_prompt)
+    # 🔥 Génération brute
+    raw_output = generate_with_hf(final_prompt)
 
-    return result
+    # 🔥 Post Processing Intelligent
+    optimized_output = clean_and_optimize(raw_output)
+
+    return optimized_output
 
 
 # =====================================================
@@ -175,12 +196,12 @@ Optimize for image generation.
 
 def test_hf():
     if not HF_TOKEN:
-        return "❌ HF_TOKEN NOT FOUND"
-    return "✅ HF TOKEN LOADED"
+        return "❌ HF TOKEN NOT FOUND"
+    return "✅ HF TOKEN OK"
 
 
 # =====================================================
-# INTERFACE DESIGN
+# INTERFACE UI
 # =====================================================
 
 with gr.Blocks(
@@ -199,12 +220,6 @@ with gr.Blocks(
         color: white !important;
         border-radius: 12px !important;
         font-weight: bold;
-        box-shadow: 0 0 15px red;
-    }
-
-    .gr-button:hover {
-        box-shadow: 0 0 30px red;
-        transform: scale(1.05);
     }
 
     textarea, input, select {
@@ -215,7 +230,7 @@ with gr.Blocks(
     """
 ) as app:
 
-    gr.Markdown("# 🚀 Nano Banana — Optimized Prompt Engine")
+    gr.Markdown("# 🚀 Nano Banana — AI Pro Prompt Engine")
 
     gender = gr.Radio(["Man", "Woman"], label="Gender")
     beach_mode = gr.Checkbox(label="Beach Mode")
@@ -232,8 +247,8 @@ with gr.Blocks(
 
     shot = gr.Dropdown(SHOT_LIST, label="Camera Shot")
 
-    generate_btn = gr.Button("🚀 Generate Optimized Prompt")
-    output = gr.Textbox(label="Final Optimized Prompt", lines=15)
+    generate_btn = gr.Button("🚀 Generate Ultra Optimized Prompt")
+    output = gr.Textbox(label="Final Prompt", lines=15)
 
     test_btn = gr.Button("🧪 Test HF Token")
     test_output = gr.Textbox(label="Status")
