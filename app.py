@@ -21,59 +21,53 @@ headers = {
 
 TOP_LIST = ["Oversized T-shirt", "Hoodie", "Shirt", "Crop Top", "Blouse"]
 BOTTOM_LIST = ["Jeans", "Cargo Pants", "Shorts", "Skirt", "Leggings"]
+
 ENV_LIST = [
-    "Urban Lifestyle",
-    "Luxury Hotel",
-    "City Street",
-    "Modern Apartment"
+    "Urban lifestyle street",
+    "Luxury hotel interior",
+    "City street golden hour",
+    "Modern apartment aesthetic",
+    "Beach sunset",
+    "Pool area luxury"
 ]
+
 COLOR_LIST = [
-    "Neutral Colors",
-    "Pastel Colors",
-    "Black & White",
-    "Earth Tone"
+    "Neutral tones",
+    "Pastel colors",
+    "Black and white style",
+    "Earth tone palette"
 ]
+
 SHOT_LIST = [
-    "Close-up",
-    "Medium Shot",
-    "Full Body",
-    "Low Angle",
-    "High Angle"
+    "Centered composition",
+    "Medium shot",
+    "Full body portrait",
+    "Close-up portrait",
+    "Low angle cinematic"
 ]
 
 # =====================================================
 # AUTO FUNCTIONS
 # =====================================================
 
-def auto_top():
-    return random.choice(TOP_LIST)
-
-def auto_bottom():
-    return random.choice(BOTTOM_LIST)
-
-def auto_env(beach_mode):
-    if beach_mode:
-        return random.choice(["Beach", "Pool Area"])
-    return random.choice(ENV_LIST)
-
-def auto_colors():
-    return random.choice(COLOR_LIST)
+def auto_choice(list_items):
+    return random.choice(list_items)
 
 # =====================================================
-# HUGGING FACE GENERATION (distilgpt2)
+# 🔥 OPTIMIZED PROMPT ENGINE FOR NANO BANANA
 # =====================================================
 
 def generate_with_hf(prompt):
 
     if not HF_TOKEN:
-        return "❌ HF_TOKEN not configured"
+        return "❌ HF_TOKEN NOT CONFIGURED"
 
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_length": 500,
-            "temperature": 0.9,
-            "top_p": 0.95,
+            "max_length": 450,
+            "temperature": 0.8,
+            "top_p": 0.9,
             "do_sample": True
         }
     }
@@ -87,8 +81,9 @@ def generate_with_hf(prompt):
 
     return str(result)
 
+
 # =====================================================
-# 🔥 PROMPT GENERATOR (TOUTES TES INSTRUCTIONS MAINTENUES)
+# 🚀 MAIN GENERATOR (OPTIMIZED FOR IMAGE GENERATION)
 # =====================================================
 
 def generate_prompt(
@@ -105,48 +100,55 @@ def generate_prompt(
     shot
 ):
 
-    # ---- Désactivation intelligente ----
+    # 🔥 Intelligent logic
     if gender == "Man":
         beach_mode = False
 
-    # ---- Auto system ----
     if auto_top_toggle:
-        top = auto_top()
+        top = auto_choice(TOP_LIST)
 
     if auto_bottom_toggle:
-        bottom = auto_bottom()
+        bottom = auto_choice(BOTTOM_LIST)
 
     if auto_env_toggle:
-        env = auto_env(beach_mode)
+        env = auto_choice(ENV_LIST)
 
     if auto_color_toggle:
-        colors = auto_colors()
+        colors = auto_choice(COLOR_LIST)
 
     # =====================================================
-    # 🚀 TES RÈGLES INTELLIGENTES DE PROMPT
+    # 🧠 SYSTEM PROMPT — FORCE STABLE FORMAT
     # =====================================================
 
     system_rules = """
-You are a professional fashion prompt engineer.
+You are a professional fashion AI prompt generator.
+
+Your task:
+Generate ONLY optimized image generation prompts.
 
 Rules:
-- Always centered
+- Always centered composition
 - High realism
-- Always wearing sunglasses from attached image
-- Sunglasses must be main focal point
-- The sunglasses must never be described as part of outfit
 - Cinematic lighting
-- Professional photography look
 - 800x1000px
 - DSLR camera
 - 50mm lens
 - Shallow depth of field
 - Background slightly blurred
-- Output in English
+- Model always wearing sunglasses from attached image
+- Sunglasses must be main visual focal point
+- Sunglasses must NOT be described as outfit accessory
+- Output strictly in English
+- Output must be a clean structured prompt
+- Do not explain
 """
 
+    # =====================================================
+    # USER STRUCTURED INPUT
+    # =====================================================
+
     user_prompt = f"""
-Generate a unique fashion image prompt.
+Create optimized image prompt.
 
 Gender: {gender}
 Beach Mode: {beach_mode}
@@ -156,13 +158,12 @@ Environment: {env}
 Colors: {colors}
 Camera Shot: {shot}
 
-Apply all professional rules.
-Follow system instructions.
+Follow all professional rules.
+Optimize for image generation.
 """
 
     final_prompt = system_rules + "\n" + user_prompt
 
-    # Send to distilgpt2
     result = generate_with_hf(final_prompt)
 
     return result
@@ -175,15 +176,15 @@ Follow system instructions.
 def test_hf():
     if not HF_TOKEN:
         return "❌ HF_TOKEN NOT FOUND"
-    return "✅ HF_TOKEN LOADED"
+    return "✅ HF TOKEN LOADED"
 
 
 # =====================================================
-# INTERFACE (TON DESIGN + BACKGROUND IMAGE)
+# INTERFACE DESIGN
 # =====================================================
 
 with gr.Blocks(
-    title="Nano Banana",
+    title="Nano Banana AI",
     css="""
     body {
         background-image: url('https://i.postimg.cc/FHC5G1FX/nano-banana-logo.png');
@@ -207,15 +208,14 @@ with gr.Blocks(
     }
 
     textarea, input, select {
-        background-color: #1e293b !important;
+        background-color: #0f172a !important;
         color: white !important;
-        border-radius: 10px !important;
         border: 1px solid #00ffff !important;
     }
     """
 ) as app:
 
-    gr.Markdown("# 🚀 Nano Banana Prompt Generator - distilgpt2")
+    gr.Markdown("# 🚀 Nano Banana — Optimized Prompt Engine")
 
     gender = gr.Radio(["Man", "Woman"], label="Gender")
     beach_mode = gr.Checkbox(label="Beach Mode")
@@ -232,8 +232,8 @@ with gr.Blocks(
 
     shot = gr.Dropdown(SHOT_LIST, label="Camera Shot")
 
-    generate_btn = gr.Button("🚀 Generate Prompt")
-    output = gr.Textbox(label="Final Prompt", lines=15)
+    generate_btn = gr.Button("🚀 Generate Optimized Prompt")
+    output = gr.Textbox(label="Final Optimized Prompt", lines=15)
 
     test_btn = gr.Button("🧪 Test HF Token")
     test_output = gr.Textbox(label="Status")
@@ -260,7 +260,7 @@ with gr.Blocks(
 
 
 # =====================================================
-# RUN SERVER
+# RUN
 # =====================================================
 
 if __name__ == "__main__":
