@@ -181,7 +181,7 @@ with gr.Blocks(
 app.launch(
     server_name="0.0.0.0",
     server_port=7860
-)import gradio as gr
+import gradio as gr
 import os
 import random
 from openai import OpenAI
