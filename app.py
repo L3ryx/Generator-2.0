@@ -2,6 +2,7 @@ import gradio as gr
 import os
 import random
 import requests
+import json
 
 # =====================================================
 # 🔐 HUGGING FACE CONFIG
@@ -13,22 +14,87 @@ API_URL = "https://api-inference.huggingface.co/models/distilgpt2"
 
 headers = {
     "Authorization": f"Bearer {HF_TOKEN}"
-}
+} if HF_TOKEN else {}
 
 # =====================================================
 # 📦 LISTES
 # =====================================================
 
-TOP_LIST = ["Oversized T-shirt", "Hoodie", "Shirt", "Crop Top", "Blouse"]
-BOTTOM_LIST = ["Jeans", "Cargo Pants", "Shorts", "Skirt", "Leggings"]
+TOP_LIST = [
+    "Oversized T-shirt",
+    "Basic Fitted T-shirt",
+    "Graphic Street Tee",
+    "Vintage Band Tee",
+    "Premium Cotton T-shirt",
+    "Heavyweight Oversized Hoodie",
+    "Zip Hoodie",
+    "Minimalist Hoodie",
+    "Luxury Embroidered Sweatshirt",
+    "Crewneck Sweatshirt",
+    "Tank Top",
+    "Athletic Tank",
+    "Silk Blouse",
+    "Satin Blouse",
+    "Oversized Shirt",
+    "Slim Fit Shirt",
+    "Denim Jacket",
+    "Leather Jacket",
+    "Bomber Jacket",
+    "Blazer Jacket",
+    "Cardigan",
+    "Long Sleeve Shirt",
+    "Short Sleeve Shirt",
+    "Mesh Fashion Top",
+    "Streetwear Pullover",
+    "Designer Statement Top"
+]
+BOTTOM_LIST = [
+    "Skinny Jeans",
+    "Slim Fit Jeans",
+    "Wide Leg Jeans",
+    "Baggy Jeans",
+    "Cargo Pants",
+    "Oversized Cargo Pants",
+    "Tailored Pants",
+    "Suit Pants",
+    "Joggers",
+    "Techwear Pants",
+    "Track Pants",
+    "Shorts",
+    "Denim Shorts",
+    "Bermuda Shorts",
+    "Mini Skirt",
+    "Midi Skirt",
+    "Maxi Skirt",
+    "Leather Pants",
+    "High Waist Pants",
+    "Straight Leg Pants",
+    "Streetwear Cargo Pants",
+    "Pleated Trousers",
+    "Luxury Fabric Pants"
+]
 
 ENV_LIST = [
-    "Urban lifestyle street",
-    "Luxury hotel interior",
-    "City street golden hour",
-    "Modern apartment aesthetic",
-    "Beach sunset",
-    "Pool area luxury"
+    "Urban street at golden hour",
+    "Luxury hotel lobby",
+    "Modern luxury apartment",
+    "City rooftop sunset",
+    "Beach sunset aesthetic",
+    "Private pool villa",
+    "Minimalist studio background",
+    "Graffiti wall urban setting",
+    "Fashion district street",
+    "Glass architecture building",
+    "Professional fashion studio",
+    "Cafe aesthetic interior",
+    "Neon city night scene",
+    "Private yacht deck",
+    "Tropical paradise beach",
+    "Luxury shopping mall",
+    "Industrial warehouse fashion shoot",
+    "Modern office interior",
+    "Luxury penthouse terrace",
+    "Underground parking cinematic"
 ]
 
 COLOR_LIST = [
@@ -39,28 +105,38 @@ COLOR_LIST = [
 ]
 
 SHOT_LIST = [
-    "Centered composition",
-    "Medium shot",
-    "Full body portrait",
+    "Centered cinematic composition",
+    "Professional fashion full body shot",
+    "Medium portrait shot",
     "Close-up portrait",
-    "Low angle cinematic"
+    "Ultra close-up focusing on sunglasses",
+    "Low angle dramatic shot",
+    "High angle aesthetic shot",
+    "Wide angle fashion shot",
+    "Telephoto lens compression effect",
+    "Editorial magazine style framing",
+    "Luxury brand campaign style shot",
+    "Instagram aesthetic composition",
+    "Film photography style shot",
+    "Studio light professional shot",
+    "High fashion runway perspective"
 ]
 
 # =====================================================
-# 🔄 AUTO FUNCTIONS
+# 🔄 AUTO FUNCTION
 # =====================================================
 
 def auto_choice(items):
     return random.choice(items)
 
 # =====================================================
-# 🤖 HUGGING FACE GENERATOR (SAFE VERSION)
+# 🤖 HUGGINGFACE GENERATION
 # =====================================================
 
 def generate_with_hf(prompt):
 
     if not HF_TOKEN:
-        return "❌ HF_TOKEN NOT CONFIGURED IN ENV VARIABLES"
+        return "❌ HF_TOKEN NOT FOUND IN ENV VARIABLES"
 
     payload = {
         "inputs": prompt,
@@ -77,7 +153,7 @@ def generate_with_hf(prompt):
             API_URL,
             headers=headers,
             json=payload,
-            timeout=60
+            timeout=120
         )
 
         if response.status_code != 200:
@@ -85,17 +161,17 @@ def generate_with_hf(prompt):
 
         result = response.json()
 
-        if isinstance(result, list):
-            return result[0].get("generated_text", "No text generated")
+        if isinstance(result, list) and "generated_text" in result[0]:
+            return result[0]["generated_text"]
 
-        return str(result)
+        return json.dumps(result, indent=2)
 
     except Exception as e:
         return f"🔥 REQUEST ERROR:\n{str(e)}"
 
 
 # =====================================================
-# 🚀 MAIN OPTIMIZED GENERATOR
+# 🚀 MAIN GENERATOR
 # =====================================================
 
 def generate_prompt(
@@ -112,11 +188,11 @@ def generate_prompt(
     shot
 ):
 
-    # 🔥 Intelligent rule
+    # 🔥 Rule
     if gender == "Man":
         beach_mode = False
 
-    # Auto selections
+    # Auto logic
     if auto_top_toggle:
         top = auto_choice(TOP_LIST)
 
@@ -130,13 +206,12 @@ def generate_prompt(
         colors = auto_choice(COLOR_LIST)
 
     # =====================================================
-    # 🧠 SYSTEM RULES FOR MODEL
+    # 🧠 SYSTEM PROMPT
     # =====================================================
 
     system_prompt = """
 You are an advanced fashion prompt engine.
 
-Your task:
 Generate ONLY optimized image generation prompts.
 
 Rules:
@@ -172,9 +247,7 @@ Optimize for image generation.
 
     final_prompt = system_prompt + "\n" + user_prompt
 
-    result = generate_with_hf(final_prompt)
-
-    return result
+    return generate_with_hf(final_prompt)
 
 
 # =====================================================
@@ -262,7 +335,7 @@ with gr.Blocks(
 
 
 # =====================================================
-# 🚀 RUN SERVER (RENDER COMPATIBLE)
+# 🚀 RUN
 # =====================================================
 
 if __name__ == "__main__":
