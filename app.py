@@ -10,8 +10,6 @@ from openai import OpenAI
 API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=API_KEY)
 
-print("API KEY LOADED:", API_KEY is not None)
-
 # ===============================
 # LISTES
 # ===============================
@@ -104,33 +102,61 @@ Shot: {shot}"""
         return f"ERROR:\n{str(e)}"
 
 # ===============================
-# BACKGROUND CSS GENERATOR
+# TEST API
 # ===============================
 
-def generate_css(https://ibb.co/vCCW9kMJ):
-    if background_url:
-        return f"""
-        body {{
-            background-image: url('{background_url}');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }}
-        """
-    return ""
+def test_api():
+    try:
+        client.models.list()
+        return "API Connected"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # ===============================
 # INTERFACE
 # ===============================
 
-with gr.Blocks(title="Nano Banana") as app:
+with gr.Blocks(
+    title="Nano Banana",
+    css=f"""
+    body {{
+        background-image: url('https://i.postimg.cc/FHC5G1FX/nano-banana-logo.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
 
-    gr.Markdown("# Nano Banana Prompt Generator")
+    .gr-button {{
+        background-color: red !important;
+        color: white !important;
+        border-radius: 12px !important;
+        font-weight: bold;
+        box-shadow: 0 0 15px red;
+    }}
 
-    background_url = gr.Textbox(
-        label="Background Image URL",
-        placeholder="Paste your image link here"
-    )
+    .gr-button:hover {{
+        box-shadow: 0 0 30px red;
+        transform: scale(1.05);
+    }}
+
+    .block {{
+        background-color: rgba(15, 23, 42, 0.85) !important;
+        border-radius: 20px !important;
+        padding: 25px;
+        box-shadow: 0 0 25px #00ffff;
+    }}
+
+    textarea, input, select {{
+        background-color: #1e293b !important;
+        color: white !important;
+        border-radius: 10px !important;
+        border: 1px solid #00ffff !important;
+        box-shadow: 0 0 10px #00ffff;
+    }}
+    """
+) as app:
+
+    gr.Markdown("# 🚀 Nano Banana Prompt Generator")
 
     gender = gr.Radio(["Man", "Woman"], label="Gender")
     beach_mode = gr.Checkbox(label="Beach Mode")
@@ -150,6 +176,9 @@ with gr.Blocks(title="Nano Banana") as app:
     generate_btn = gr.Button("Generate Prompt")
     output = gr.Textbox(label="Final Prompt", lines=15)
 
+    test_btn = gr.Button("Test API")
+    test_output = gr.Textbox(label="API Status")
+
     generate_btn.click(
         generate_prompt,
         inputs=[
@@ -168,12 +197,7 @@ with gr.Blocks(title="Nano Banana") as app:
         outputs=output
     )
 
-    # Apply dynamic CSS when background changes
-    background_url.change(
-        fn=generate_css,
-        inputs=background_url,
-        outputs=None
-    )
+    test_btn.click(test_api, inputs=[], outputs=test_output)
 
 # ===============================
 # RUN SERVER
