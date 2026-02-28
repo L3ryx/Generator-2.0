@@ -1,13 +1,12 @@
-import gradio as gr
+from openai import OpenAI
+import os
 
-def hello():
-    return "✅ Render fonctionne correctement !"
+API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=API_KEY)
 
-with gr.Blocks() as app:
-    gr.Markdown("# Test Deployment")
-    btn = gr.Button("Tester")
-    output = gr.Textbox(label="Resultat")
-
-    btn.click(fn=hello, inputs=[], outputs=output)
-
-app.launch(server_name="0.0.0.0", server_port=7860)
+def test_api():
+    try:
+        response = client.models.list()
+        return "✅ API Connectée avec succès !"
+    except Exception as e:
+        return f"❌ Erreur API : {str(e)}"
