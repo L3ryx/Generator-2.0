@@ -8,6 +8,10 @@ from openai import OpenAI
 # ===============================
 
 API_KEY = os.getenv("OPENAI_API_KEY")
+
+if not API_KEY:
+    raise ValueError("❌ OPENAI_API_KEY not found in environment variables")
+
 client = OpenAI(api_key=API_KEY)
 
 # ===============================
@@ -25,11 +29,14 @@ SHOT_LIST = ["Close-up", "Medium Shot", "Full Body", "Low Angle", "High Angle"]
 # ===============================
 
 def auto_top(): return random.choice(TOP_LIST)
+
 def auto_bottom(): return random.choice(BOTTOM_LIST)
+
 def auto_env(beach_mode):
     if beach_mode:
         return random.choice(["Beach", "Pool Area"])
     return random.choice(ENV_LIST)
+
 def auto_colors(): return random.choice(COLOR_LIST)
 
 # ===============================
@@ -106,15 +113,15 @@ def test_api():
 
 
 # ===============================
-# INTERFACE (CHANGE ONLY IMAGE LINK BELOW)
+# INTERFACE
 # ===============================
 
 with gr.Blocks(
     title="Nano Banana",
     css="""
-    /* 🔥 CHANGE ONLY THIS IMAGE LINK */
     body {
-        background: url('https://drive.google.com/file/d/1HD4qAQRb_Lzp0Ilg8vU7U1qMH0sRv_zK/view?usp=drivesdk');
+        /* 🔥 CHANGE THIS IMAGE LINK */
+        background: url('https://ibb.co/vCCW9kMJ');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
