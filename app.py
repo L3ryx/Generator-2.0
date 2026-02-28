@@ -1,34 +1,33 @@
 import gradio as gr
 import os
 import random
-import requests
+from huggingface_hub import InferenceClient
 
 # =====================================================
-# 🔐 HUGGING FACE CONFIG (NEW API)
+# 🔐 HUGGING FACE CONFIG (NEW ROUTER API)
 # =====================================================
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-API_URL = "https://router.huggingface.co/hf-inference/models/distilgpt2"
-
-headers = {
-    "Authorization": f"Bearer {HF_TOKEN}"
-}
+client = InferenceClient(
+    model="distilgpt2",
+    token=HF_TOKEN
+)
 
 # =====================================================
-# 📦 LISTES (Augmentées)
+# 📦 LISTES (PLUS COMPLETES)
 # =====================================================
 
 TOP_LIST = [
     "Oversized T-shirt",
     "Hoodie",
-    "Shirt",
-    "Crop Top",
-    "Blouse",
+    "Graphic Tee",
     "Tank Top",
     "Leather Jacket",
-    "Sweater",
-    "Bomber Jacket",
+    "Crop Top",
+    "Sweatshirt",
+    "Denim Jacket",
+    "Blazer",
     "Corset"
 ]
 
@@ -36,54 +35,52 @@ BOTTOM_LIST = [
     "Jeans",
     "Cargo Pants",
     "Shorts",
-    "Skirt",
-    "Leggings",
-    "Leather Pants",
-    "Wide Pants",
     "Mini Skirt",
-    "Baggy Jeans"
+    "Long Skirt",
+    "Leggings",
+    "Wide Pants",
+    "Leather Pants",
+    "Joggers",
+    "Tailored Pants"
 ]
 
 ENV_LIST = [
-    "Urban street",
-    "Luxury hotel",
-    "City rooftop",
-    "Modern apartment",
-    "Beach sunset",
-    "Pool area",
-    "Neon city",
-    "Abandoned warehouse",
-    "Fashion studio",
-    "Paris street"
+    "Urban Street",
+    "Luxury Hotel",
+    "Beach Sunset",
+    "Private Pool",
+    "Modern Apartment",
+    "City Rooftop",
+    "Fashion Studio",
+    "Neon City",
+    "Car Parking Scene",
+    "Tropical Paradise"
 ]
 
 COLOR_LIST = [
-    "Neutral tones",
-    "Pastel colors",
+    "Neutral Tone",
     "Black & White",
-    "Earth tones",
-    "Vibrant colors",
-    "Dark aesthetic"
+    "Pastel Colors",
+    "Earth Tone",
+    "Neon Style",
+    "Dark Elegant",
+    "Luxury Gold",
+    "Minimal Clean"
 ]
 
 SHOT_LIST = [
-    "Centered composition",
-    "Full body",
-    "Medium shot",
-    "Close up",
-    "Low angle cinematic",
-    "High angle dramatic"
+    "Centered Composition",
+    "Full Body Shot",
+    "Medium Shot",
+    "Close Up",
+    "Low Angle",
+    "High Angle",
+    "Portrait Style",
+    "Wide Angle Cinematic"
 ]
 
 # =====================================================
-# 🔄 AUTO FUNCTION
-# =====================================================
-
-def auto_choice(list_items):
-    return random.choice(list_items)
-
-# =====================================================
-# 🤖 GENERATOR USING DISTILGPT2 (NEW API)
+# 🤖 PROMPT GENERATOR (USING HUGGINGFACE ROUTER)
 # =====================================================
 
 def generate_prompt(
@@ -96,22 +93,27 @@ def generate_prompt(
     shot
 ):
 
+    if not HF_TOKEN:
+        return "❌ HF_TOKEN NOT CONFIGURED"
+
     if gender == "Man":
         beach_mode = False
 
     system_prompt = """
-You are an advanced fashion prompt engineer.
-Generate a high quality image generation prompt.
+You are an advanced fashion AI prompt engine.
+
+Generate ONLY optimized image generation prompts.
 
 Rules:
-- Always centered
 - Cinematic lighting
-- DSLR style
+- DSLR camera
 - 50mm lens
+- Centered
 - Background blur
-- Sunglasses from reference image must be highlighted
+- Sunglasses must be highlighted
+- 800x1000 resolution
 - Output in English
-- No explanations
+- No explanation
 """
 
     user_prompt = f"""
@@ -121,54 +123,33 @@ Top: {top}
 Bottom: {bottom}
 Environment: {env}
 Colors: {colors}
-Shot: {shot}
+Camera Shot: {shot}
 """
 
     final_prompt = system_prompt + "\n" + user_prompt
 
-    payload = {
-        "inputs": final_prompt,
-        "parameters": {
-            "max_new_tokens": 300,
-            "temperature": 0.8,
-            "top_p": 0.9,
-            "do_sample": True
-        }
-    }
-
-    if not HF_TOKEN:
-        return "❌ HF_TOKEN not set"
-
     try:
-        response = requests.post(
-            API_URL,
-            headers=headers,
-            json=payload,
-            timeout=60
+        response = client.text_generation(
+            final_prompt,
+            max_new_tokens=300,
+            temperature=0.9,
+            top_p=0.95
         )
 
-        if response.status_code != 200:
-            return f"🔥 HF ERROR:\n{response.text}"
-
-        result = response.json()
-
-        if isinstance(result, list):
-            return result[0].get("generated_text", "No output")
-
-        return str(result)
+        return response
 
     except Exception as e:
-        return f"🔥 REQUEST ERROR:\n{str(e)}"
+        return f"🔥 HF API ERROR:\n{str(e)}"
 
 
 # =====================================================
-# 🔎 TEST TOKEN
+# 🔎 TOKEN TEST
 # =====================================================
 
 def test_token():
-    if not HF_TOKEN:
-        return "❌ HF_TOKEN NOT FOUND"
-    return "✅ TOKEN DETECTED"
+    if HF_TOKEN:
+        return "✅ HF TOKEN DETECTED"
+    return "❌ HF TOKEN NOT FOUND"
 
 
 # =====================================================
@@ -189,7 +170,7 @@ with gr.Blocks(
     .gr-button {
         background-color: red !important;
         color: white !important;
-        border-radius: 12px;
+        border-radius: 12px !important;
         font-weight: bold;
     }
 
@@ -201,22 +182,22 @@ with gr.Blocks(
     """
 ) as app:
 
-    gr.Markdown("# 🚀 Nano Banana — DistilGPT2 Version")
+    gr.Markdown("# 🚀 Nano Banana — Prompt Generator")
 
     gender = gr.Radio(["Man", "Woman"], label="Gender")
     beach_mode = gr.Checkbox(label="Beach Mode")
 
-    # ✅ DROPDOWNS (IMPORTANT)
-    top = gr.Dropdown(TOP_LIST, label="Top")
-    bottom = gr.Dropdown(BOTTOM_LIST, label="Bottom")
+    # ✅ DROPDOWNS POUR TOUS LES PARAMÈTRES
+    top = gr.Dropdown(TOP_LIST, label="Top Selection")
+    bottom = gr.Dropdown(BOTTOM_LIST, label="Bottom Selection")
     env = gr.Dropdown(ENV_LIST, label="Environment")
     colors = gr.Dropdown(COLOR_LIST, label="Colors")
     shot = gr.Dropdown(SHOT_LIST, label="Camera Shot")
 
-    generate_btn = gr.Button("🚀 Generate Prompt")
+    generate_btn = gr.Button("🚀 Generate Optimized Prompt")
     output = gr.Textbox(label="Final Prompt", lines=15)
 
-    test_btn = gr.Button("🧪 Test Token")
+    test_btn = gr.Button("🧪 Test HF Token")
     test_output = gr.Textbox(label="Status")
 
     generate_btn.click(
@@ -237,7 +218,7 @@ with gr.Blocks(
 
 
 # =====================================================
-# 🚀 RUN SERVER
+# 🚀 RUN (RENDER COMPATIBLE)
 # =====================================================
 
 if __name__ == "__main__":
